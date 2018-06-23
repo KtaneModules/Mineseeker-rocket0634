@@ -112,7 +112,6 @@ public class BombsModule : MonoBehaviour
             else startingValue++;
         }
         serial = Info.GetSerialNumberNumbers().ToArray();
-        Calculate();
         start = UnityEngine.Random.Range(0, sprites.Length);
         colorBackground = UnityEngine.Random.Range(0, BackgroundColors.Count());
         var selected = false;
@@ -138,6 +137,7 @@ public class BombsModule : MonoBehaviour
                 colorBackground = UnityEngine.Random.Range(0, BackgroundColors.Count());
             }
         }
+        Calculate();
         BombHolder.sprite = sprites[start];
         for (int i = 0; i < Buttons.Length; i++)
         {
@@ -301,7 +301,7 @@ public class BombsModule : MonoBehaviour
             ready = true;
             yield break;
         }
-        var move = "";
+        var move = m;
         switch (m)
         {
             case "top":
@@ -321,6 +321,7 @@ public class BombsModule : MonoBehaviour
             BombHolder.transform.localPosition = Vector3.Lerp(b, bh1, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
         }
+        //Debug.LogFormat("[Bombs {0}] Moved {1} from coordinate {2},{3} to {4},{5}", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
         BombHolder.sprite = sprites[loc[a][d]];
         BombHolder.transform.localPosition = new Vector3(0, 0.55f, 0);
         BombHolder2.transform.localPosition = bh2O;
