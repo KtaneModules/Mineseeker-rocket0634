@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Bombs;
+using Mineseeker;
 
-public class BombsModule : MonoBehaviour
+public class MineseekerModule : MonoBehaviour
 {
 
     private static int _moduleIDCounter = 1;
@@ -26,10 +26,10 @@ public class BombsModule : MonoBehaviour
        new int[] { 14, 14, 7, 12, 0, 1, 14, 6, 3, 1, 14, 14 },
        new int[] { 1, 8, 14, 6, 5, 14, 10, 14, 1, 0, 14, 14 },
        new int[] { 14, 9, 0, 14, 14, 13, 14, 8, 9, 14, 4, 1 },
-       new int[] { 12, 13, 1, 14, 3, 14, 2, 11, 4, 14, 14, 14 },
+       new int[] { 12, 13, 1, 3, 14, 14, 2, 11, 4, 14, 14, 14 },
        new int[] { 10, 14, 11, 14, 9, 6, 8, 5, 14, 14, 3, 14 },
        new int[] { 14, 14, 14, 13, 1, 5, 14, 9, 14, 14, 7, 8 },
-       new int[] { 11, 14, 5, 10, 8, 14, 7, 0, 2, 14, 14 },
+       new int[] { 11, 14, 5, 10, 8, 14, 7, 14, 0, 2, 14, 14 },
        new int[] { 14, 2, 10, 3, 14, 14, 13, 7, 14, 14, 4, 12 },
        new int[] { 0, 14, 14, 4, 14, 14, 14, 12, 9, 10, 5, 6 }
     }, loc = new int[][]
@@ -40,7 +40,7 @@ public class BombsModule : MonoBehaviour
        new int[] { 7, 7, 4, 2, 1, 6, 7, 0, 3, 5, 7, 7 },
        new int[] { 4, 2, 7, 0, 3, 7, 1, 7, 5, 6, 7, 7 },
        new int[] { 7, 0, 6, 7, 7, 5, 7, 2, 1, 7, 3, 4 },
-       new int[] { 2, 3, 1, 7, 5, 7, 0, 6, 4, 7, 7, 7 },
+       new int[] { 2, 3, 1, 5, 7, 7, 0, 6, 4, 7, 7, 7 },
        new int[] { 0, 7, 5, 7, 6, 2, 3, 4, 7, 7, 1, 7 },
        new int[] { 7, 7, 7, 5, 0, 4, 7, 1, 7, 7, 6, 3 },
        new int[] { 1, 7, 3, 6, 4, 7, 5, 7, 2, 0, 7, 7 },
@@ -93,16 +93,19 @@ public class BombsModule : MonoBehaviour
         { "DRU", "LDRU", "LR", "L", "DU", "U", "D", "RU", "LDR", "LD", "U", "D" },
         { "RU", "LU", "R", "LR", "LRU", "LR", "LRU", "L", "RU", "LRU", "LR", "LU" }
     };
+    private int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
     private int row, start, startingValue, destination, tF, a, d;
     private char[] vowels = { 'A', 'E', 'I', 'O', 'U' };
     private int[] serial, startingLocation;
     private Queue<IEnumerable> queue = new Queue<IEnumerable>();
+    private Queue<int[]> Movement = new Queue<int[]>();
+    private List<int[]> map = new List<int[]>();
     private bool _isActive, ready = true, solved;
 
     // Use this for initialization
     void Start()
     {
-        _moduleID += _moduleIDCounter;
+        _moduleID = _moduleIDCounter++;
         Background.color = Color.black;
         startingValue += Info.GetBatteryHolderCount() + Info.GetPortPlateCount();
         var b = Info.GetIndicators().SelectMany((x) => x.ToUpperInvariant().ToCharArray());
@@ -137,7 +140,7 @@ public class BombsModule : MonoBehaviour
                 colorBackground = UnityEngine.Random.Range(0, BackgroundColors.Count());
             }
         }
-        Calculate();
+        DestinationValues();
         BombHolder.sprite = sprites[start];
         for (int i = 0; i < Buttons.Length; i++)
         {
@@ -148,12 +151,66 @@ public class BombsModule : MonoBehaviour
         Module.OnActivate += delegate ()
         {
             Background.color = BackgroundColors[colorBackground];
-            Debug.LogFormat("[Bombs {0}] Color is {1}", _moduleID, ColorNames[Array.IndexOf(BackgroundColors, Background.color)]);
-            Debug.LogFormat("[Bombs {0}] Number is {1}", _moduleID, destination);
-            Debug.LogFormat("[Bombs {0}] Current location is {1}, {2}", _moduleID, a + 1, d + 1);
+            Debug.LogFormat("[Mineseeker #{0}] Color is {1}", _moduleID, ColorNames[Array.IndexOf(BackgroundColors, Background.color)]);
+            Debug.LogFormat("[Mineseeker #{0}] Bomb shown is {1}", _moduleID, sprites[start].name);
+            Debug.LogFormat("[Mineseeker #{0}] Current location is [{2}, {1}]", _moduleID, a + 1, d + 1);
+            Calculate();
             _isActive = true;
         };
         StartCoroutine(WaitForInput());
+    }
+
+    void DestinationValues()
+    {
+        var set = false;
+        Destinations[start] = new[] { a, d };
+        var y = a;
+        var z = d;
+        while (!set)
+        {
+            if (loc[y][z] != 7) Destinations[loc[y][z]] = new[] { y, z };
+            foreach (char c in dir[y, z])
+            {
+                switch(c)
+                {
+                    case 'L':
+                        if (!map.Any(x => x.SequenceEqual(new int[] { y, z - 1 })))
+                        {
+                            map.Add(new int[] { y, z - 1 });
+                            Movement.Enqueue(new int[] { y, z - 1 });
+                        }
+                        break;
+                    case 'D':
+                        if (!map.Any(x => x.SequenceEqual(new int[] { y + 1, z })))
+                        {
+                            map.Add(new int[] { y + 1, z });
+                            Movement.Enqueue(new int[] { y + 1, z });
+                        }
+                        break;
+                    case 'R':
+                        if (!map.Any(x => x.SequenceEqual(new int[] { y, z + 1 })))
+                        {
+                            map.Add(new int[] { y, z + 1 });
+                            Movement.Enqueue(new int[] { y, z + 1 });
+                        }
+                        break;
+                    case 'U':
+                        if (!map.Any(x => x.SequenceEqual(new int[] { y - 1, z })))
+                        {
+                            map.Add(new int[] { y - 1, z });
+                            Movement.Enqueue(new int[] { y - 1, z });
+                        }
+                        break;
+                }
+            }
+            if (Movement.Count == 0) set = true;
+            else
+            {
+                var coordinates = Movement.Dequeue();
+                y = coordinates[0];
+                z = coordinates[1];
+            }
+        }
     }
 
     void Calculate()
@@ -166,7 +223,10 @@ public class BombsModule : MonoBehaviour
             destination--;
         }
         if (destination < 0) destination = serial[0];
-        else if (destination > 6) destination = 6;
+        while (destination > 6) destination -= 7;
+        Debug.LogFormat("[Mineseeker #{0}] Number is {1}", _moduleID, destination);
+        Debug.LogFormat("[Mineseeker #{0}] Desired Bomb is {1}", _moduleID, sprites[tab[colorBackground, destination]].name);
+        Debug.LogFormat("[Mineseeker #{0}] Destination is [{2}, {1}]", _moduleID, Destinations[tab[colorBackground, destination]][0] + 1, Destinations[tab[colorBackground,destination]][1] + 1);
     }
 
     KMSelectable.OnInteractHandler ButtonHandler(int i)
@@ -174,6 +234,8 @@ public class BombsModule : MonoBehaviour
         return delegate ()
         {
             if (!_isActive || solved) return false;
+            Buttons[i].AddInteractionPunch(0.5f);
+            Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
             queue.Enqueue(ButtonPress(i));
             return false;
         };
@@ -199,8 +261,6 @@ public class BombsModule : MonoBehaviour
         var cP = new int[] { a, d };
         var rP = BombHolder.transform.localPosition;
         var move = "";
-        Buttons[i].AddInteractionPunch(0.5f);
-        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         ready = false;
         var strike = true;
         switch (i)
@@ -254,8 +314,8 @@ public class BombsModule : MonoBehaviour
                 else
                 {
                     Module.HandleStrike();
-                    if (!BombHolder.sprite.Equals(sprites[7])) Debug.LogFormat("[Bombs {0}] Incorrect bomb chosen.", _moduleID);
-                    else Debug.LogFormat("[Bombs {0}] Coordinate {2},{1} does not contain a bomb.", _moduleID, a + 1, d + 1);
+                    if (!BombHolder.sprite.Equals(sprites[7])) Debug.LogFormat("[Mineseeker #{0}] Incorrect bomb chosen.", _moduleID);
+                    else Debug.LogFormat("[Mineseeker #{0}] Coordinate {2},{1} does not contain a bomb.", _moduleID, a + 1, d + 1);
                     ready = true;
                 }
                 break;
@@ -268,7 +328,7 @@ public class BombsModule : MonoBehaviour
     IEnumerator MoveScreen(Vector3 bh1, Vector3 bh2O, int[] oP, string m, bool strike = false)
     {
         var t = 0.0f;
-        var duration = 0.5f;
+        var duration = 0.25f;
         BombHolder2.transform.localPosition = bh2O;
         BombHolder2.sprite = sprites[7];
         var b = BombHolder.transform.localPosition;
@@ -288,7 +348,7 @@ public class BombsModule : MonoBehaviour
                 BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             }
             Module.HandleStrike();
-            Debug.LogFormat("[Bombs {0}] Wall detected to the {3} at coordinate {2},{1}", _moduleID, a + 1, d + 1, m);
+            Debug.LogFormat("[Mineseeker {0}] Wall detected to the {3} at coordinate [{2},{1}]", _moduleID, a + 1, d + 1, m);
             t = 0;
             while (t < duration)
             {
@@ -321,12 +381,55 @@ public class BombsModule : MonoBehaviour
             BombHolder.transform.localPosition = Vector3.Lerp(b, bh1, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
         }
-        //Debug.LogFormat("[Bombs {0}] Moved {1} from coordinate {2},{3} to {4},{5}", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
+        Debug.LogFormat("[Mineseeker #{0}] Moved {1} from coordinate [{3},{2}] to [{5},{4}]", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
         BombHolder.sprite = sprites[loc[a][d]];
         BombHolder.transform.localPosition = new Vector3(0, 0.55f, 0);
         BombHolder2.transform.localPosition = bh2O;
         yield return null;
         ready = true;
+    }
+
+    private string TwitchHelpMessage = "Interact with the module using !{0} udlr NSEW, and use !{0} submit to submit your selection.";
+
+    private KMSelectable[] ProcessTwitchCommand(string input)
+    {
+        input = input.ToLowerInvariant();
+        var submit = false;
+        var presses = new List<KMSelectable>();
+        if (input.EndsWith("submit") || input.StartsWith("submit"))
+        {
+            submit = true;
+            input = input.Replace("submit", "");
+        }
+        input = input.Replace("press", "");
+        foreach (char c in input)
+        {
+            switch (c)
+            {
+                case 'u':
+                case 'n':
+                    presses.Add(Buttons[0]);
+                    break;
+                case 'r':
+                case 'e':
+                    presses.Add(Buttons[1]);
+                    break;
+                case 'd':
+                case 's':
+                    presses.Add(Buttons[2]);
+                    break;
+                case 'l':
+                case 'w':
+                    presses.Add(Buttons[3]);
+                    break;
+                case ' ':
+                    break;
+                default:
+                    return null;
+            }
+        }
+        if (submit) presses.Add(Buttons[4]);
+        return presses.ToArray();
     }
 
     // Update is called once per frame
