@@ -27,8 +27,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.82277649"
-     inkscape:cx="292.62891"
-     inkscape:cy="309.39934"
+     inkscape:cx="85.403738"
+     inkscape:cy="311.70686"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -93,7 +93,7 @@
        transform="translate(-26,26)"
        xlink:href="#rectB-4" />
     <path
-       style="opacity:1;fill:#cb4154;fill-opacity:1;stroke:#cb4154;stroke-width:0.11831283;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="opacity:1;fill:#952524;fill-opacity:1;stroke:none;stroke-width:0.118;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 26,73 v -6 h 7 6 v 6 7 h -6 -7 z"
        id="rectBR-1"
        inkscape:connector-curvature="0" />
@@ -138,7 +138,7 @@
        xlink:href="#rectBR-5"
        transform="translate(-91,13)" />
     <path
-       style="opacity:1;fill:#891e1e;fill-opacity:1;stroke:none;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="opacity:1;fill:#825534;fill-opacity:1;stroke:none;stroke-width:3;stroke-linecap:butt;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 156,67 h -13 v 13 h 13 z"
        id="rectBr-1"
        inkscape:connector-curvature="0" />
@@ -1223,66 +1223,66 @@
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\100.png"
        xlink:href="100.png"
-       width="11"
-       height="11"
-       preserveAspectRatio="none"
-       id="image5"
+       y="55"
        x="27"
-       y="55" />
+       id="image5"
+       preserveAspectRatio="none"
+       height="11"
+       width="11" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\85.png"
        xlink:href="85.png"
-       y="55"
-       x="40"
-       id="image4"
-       preserveAspectRatio="none"
+       width="11"
        height="11"
-       width="11" />
+       preserveAspectRatio="none"
+       id="image4"
+       x="40"
+       y="55" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\11.png"
        xlink:href="11.png"
-       y="55"
-       x="92"
-       id="image3"
-       preserveAspectRatio="none"
+       width="11"
        height="11"
-       width="11" />
+       preserveAspectRatio="none"
+       id="image3"
+       x="92"
+       y="55" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\6.png"
        xlink:href="6.png"
-       y="55"
-       x="131"
-       id="image0"
-       preserveAspectRatio="none"
+       width="11"
        height="11"
-       width="11" />
+       preserveAspectRatio="none"
+       id="image0"
+       x="131"
+       y="55" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\6o.png"
        xlink:href="6o.png"
-       y="55"
-       x="144"
-       id="image1"
-       preserveAspectRatio="none"
+       width="11"
        height="11"
-       width="11" />
+       preserveAspectRatio="none"
+       id="image1"
+       x="144"
+       y="55" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\10.png"
        xlink:href="10.png"
-       y="54"
-       x="157"
-       id="image2"
-       preserveAspectRatio="none"
+       width="12"
        height="12"
-       width="12" />
+       preserveAspectRatio="none"
+       id="image2"
+       x="157"
+       y="54" />
     <image
        sodipodi:absref="D:\ktane\Mineseeker\Manual\img\63214.png"
        xlink:href="63214.png"
-       y="54"
-       x="170"
-       id="image6"
-       preserveAspectRatio="none"
+       width="12"
        height="12"
-       width="12" />
+       preserveAspectRatio="none"
+       id="image6"
+       x="170"
+       y="54" />
     <use
        y="0"
        x="0"
