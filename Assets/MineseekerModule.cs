@@ -5,19 +5,32 @@ using System.Linq;
 using UnityEngine;
 using Mineseeker;
 
+/*public static class ExtensionMethod
+{
+    public static Texture2D toTexture2D(this RenderTexture tRex)
+    {
+        Texture2D tex = new Texture2D(512, 512, TextureFormat.RGB24, false);
+        RenderTexture.active = tRex;
+        tex.ReadPixels(new Rect(0, 0, tRex.width, tRex.height), 0, 0);
+        tex.Apply();
+        return tex;
+    }
+}*/
+
 public class MineseekerModule : MonoBehaviour
 {
-
     private static int _moduleIDCounter = 1;
     private int _moduleID, colorBackground;
     public KMBombInfo Info;
     public KMBombModule Module;
     public KMAudio Audio;
+    public KMColorblindMode CBMode;
     public SpriteRenderer BombHolder, BombHolder2, Background;
     public Sprite[] sprites;
+    public TextMesh CBText;
     public KMSelectable[] Buttons;
     public Color[] BackgroundColors;
-    public string[] ColorNames;
+    public string[] ColorNames, CBNames;
     private int[][] col = new int[][]
     {
        new int[] { 3, 7, 14, 14, 14, 11, 14, 14, 12, 13, 6, 2 },
@@ -94,6 +107,7 @@ public class MineseekerModule : MonoBehaviour
         { "RU", "LU", "R", "LR", "LRU", "LR", "LRU", "L", "RU", "LRU", "LR", "LU" }
     };
     private int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
+    private float[][] Translations = new float[][] { new[] { -.112f, .02f }, new[] { -.08f, .02f }, new[] { -.12f, 0 }, new[] { -.1f, 0 }, new[] { -.1f, -.02f }, new[] { -.09f, .01f }, new[] { -.1f, -.01f } };
     private int row, start, startingValue, destination, tF, a, d;
     private char[] vowels = { 'A', 'E', 'I', 'O', 'U' };
     private int[] serial, startingLocation;
@@ -105,7 +119,14 @@ public class MineseekerModule : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        if (!CBMode.ColorblindModeActive) CBText.gameObject.SetActive(false);
         _moduleID = _moduleIDCounter++;
+        /*Debug.LogFormat("[Mineseeker #{0}] " + Convert.ToBase64String(sprites[2].texture.GetRawTextureData()));
+        RenderTexture copy = new RenderTexture(sprites[2].texture.width, sprites[2].texture.height, 0);
+        Graphics.Blit(sprites[2].texture, copy);
+        Texture2D png = copy.toTexture2D();
+        Debug.LogFormat("[Mineseeker #{0}] " + Convert.ToBase64String(png.EncodeToPNG()), _moduleID);
+        Debug.LogFormat("[Mineseeker #{0}] " + png.format, _moduleID);*/
         Background.color = Color.black;
         startingValue += Info.GetBatteryHolderCount() + Info.GetPortPlateCount();
         var b = Info.GetIndicators().SelectMany((x) => x.ToUpperInvariant().ToCharArray());
@@ -154,6 +175,8 @@ public class MineseekerModule : MonoBehaviour
             Debug.LogFormat("[Mineseeker #{0}] Color is {1}", _moduleID, ColorNames[Array.IndexOf(BackgroundColors, Background.color)]);
             Debug.LogFormat("[Mineseeker #{0}] Bomb shown is {1}", _moduleID, sprites[start].name);
             Debug.LogFormat("[Mineseeker #{0}] Current location is [{2}, {1}]", _moduleID, a + 1, d + 1);
+            CBText.text = ((Char)(65 + a)).ToString() + CBNames[colorBackground];
+            CBText.transform.localPosition = new Vector3(Translations[start][0], 0.55f, Translations[start][1]);
             Calculate();
             _isActive = true;
         };
@@ -332,6 +355,7 @@ public class MineseekerModule : MonoBehaviour
         BombHolder2.transform.localPosition = bh2O;
         BombHolder2.sprite = sprites[7];
         var b = BombHolder.transform.localPosition;
+        if (CBText.gameObject.activeSelf) CBText.gameObject.SetActive(false);
         if (strike)
         {
             duration /= 2;
@@ -348,16 +372,20 @@ public class MineseekerModule : MonoBehaviour
                 BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             }
             Module.HandleStrike();
-            Debug.LogFormat("[Mineseeker {0}] Wall detected to the {3} at coordinate [{2},{1}]", _moduleID, a + 1, d + 1, m);
+            Debug.LogFormat("[Mineseeker #{0}] Wall detected to the {3} at coordinate [{2},{1}]", _moduleID, a + 1, d + 1, m);
             t = 0;
             while (t < duration)
             {
                 yield return null;
                 t = Mathf.Min(t + Time.deltaTime, duration);
-                if (oP.SequenceEqual(startingLocation)) Background.transform.localPosition = Vector3.Lerp(bh1, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
+                if (oP.SequenceEqual(startingLocation))
+                {
+                    Background.transform.localPosition = Vector3.Lerp(bh1, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
+                }
                 BombHolder.transform.localPosition = Vector3.Lerp(bh1, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
                 BombHolder2.transform.localPosition = Vector3.Lerp(b, bh2O, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             }
+            if (CBMode.ColorblindModeActive && oP.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
             ready = true;
             yield break;
         }
@@ -381,6 +409,7 @@ public class MineseekerModule : MonoBehaviour
             BombHolder.transform.localPosition = Vector3.Lerp(b, bh1, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
         }
+        if (CBMode.ColorblindModeActive && new int[] { a, d }.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
         Debug.LogFormat("[Mineseeker #{0}] Moved {1} from coordinate [{3},{2}] to [{5},{4}]", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
         BombHolder.sprite = sprites[loc[a][d]];
         BombHolder.transform.localPosition = new Vector3(0, 0.55f, 0);
@@ -435,6 +464,6 @@ public class MineseekerModule : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (tF != Info.GetTwoFactorCodes().Sum()) Calculate();
+        if (tF != Info.GetTwoFactorCodes().Sum(x => x % 10)) Calculate();
     }
 }
