@@ -44,7 +44,8 @@ namespace Mineseeker
         MSA,
         TRN,
         BOB,
-        FRK
+        FRK,
+        NLL
     }
 
     public enum IndicatorColor
@@ -276,7 +277,7 @@ namespace Mineseeker
 
         public static int GetBatteryCount(this KMBombInfo bombInfo, Battery batteryType)
         {
-            return GetBatteryCount(bombInfo, (int)batteryType);
+            return GetBatteryCount(bombInfo, (int) batteryType);
         }
 
         public static int GetBatteryCount(this KMBombInfo bombInfo, int batteryType)
@@ -292,7 +293,7 @@ namespace Mineseeker
 
         public static int GetBatteryHolderCount(this KMBombInfo bombInfo, Battery batteryType)
         {
-            return GetBatteryHolderCount(bombInfo, (int)batteryType);
+            return GetBatteryHolderCount(bombInfo, (int) batteryType);
         }
 
         public static int GetBatteryHolderCount(this KMBombInfo bombInfo, int batteryType)
