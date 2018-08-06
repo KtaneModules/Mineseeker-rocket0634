@@ -1,59 +1,60 @@
-﻿using Newtonsoft.Json;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class KMColorblindMode : MonoBehaviour
 {
-	void Awake()
-	{
-		settingsPath = Path.Combine(Path.Combine(Application.persistentDataPath, "Modsettings"), "ColorblindMode.json");
-	}
-	
-	[SerializeField]
-	private bool _colorblindMode = false;
-	
-	public bool ColorblindModeActive
-	{
-		get
-		{
-			if (Application.isEditor) return _colorblindMode;
+    [SerializeField]
+    private bool _colorblindMode = false;
 
-			if (!File.Exists(settingsPath)) WriteSettings(new ColorblindModeSettings());
+    public bool ColorblindModeActive
+    {
+        get
+        {
+            if (Application.isEditor)
+                return _colorblindMode;
 
-			ColorblindModeSettings settings = JsonConvert.DeserializeObject<ColorblindModeSettings>(File.ReadAllText(settingsPath));
-			WriteSettings(settings);
+            string key = null;
 
-			string moduleID = null;
-			string moduleName = null;
+            KMBombModule bombModule = GetComponent<KMBombModule>();
+            KMNeedyModule needyModule = GetComponent<KMNeedyModule>();
 
-			KMBombModule bombModule = GetComponent<KMBombModule>();
-			KMNeedyModule needyModule = GetComponent<KMNeedyModule>();
-			if (bombModule)
-			{
-				moduleID = bombModule.ModuleType;
-				moduleName = bombModule.ModuleDisplayName;
-			}
-			else if (needyModule)
-			{
-				moduleID = needyModule.ModuleType;
-				moduleName = needyModule.ModuleDisplayName;
-			}
+            if (bombModule != null)
+                key = bombModule.ModuleType;
+            else if (needyModule != null)
+                key = needyModule.ModuleType;
+            else
+                key = Regex.Replace(gameObject.name, @"\(Clone\)$", "");
 
-			return settings.Enabled && !settings.ModuleBlacklist.Contains(moduleID) && !settings.ModuleBlacklist.Contains(moduleName);
-		}
-	}
+            try
+            {
+                var settingsPath = Path.Combine(Path.Combine(Application.persistentDataPath, "Modsettings"), "ColorblindMode.json");
 
-	static string settingsPath;
+                ColorblindModeSettings settings = new ColorblindModeSettings();
+                if (File.Exists(settingsPath))
+                    settings = JsonConvert.DeserializeObject<ColorblindModeSettings>(File.ReadAllText(settingsPath));
 
-	static void WriteSettings(ColorblindModeSettings settings)
-	{
-		File.WriteAllText(settingsPath, JsonConvert.SerializeObject(settings, Formatting.Indented));
-	}
+                bool? isEnabled = null;
+                if (!string.IsNullOrEmpty(key) && !settings.EnabledModules.TryGetValue(key, out isEnabled))
+                    settings.EnabledModules[key] = null;
+
+                File.WriteAllText(settingsPath, JsonConvert.SerializeObject(settings, Formatting.Indented));
+                return isEnabled ?? settings.Enabled;
+            }
+            catch (Exception e)
+            {
+                Debug.LogFormat(@"[Colorblind Mode] Error in ""{0}"": {1} ({2})\n{3}", key ?? "<null>", e.Message, e.GetType().FullName, e.StackTrace);
+                return false;
+            }
+        }
+    }
 }
 
 internal class ColorblindModeSettings
 {
-	public bool Enabled = false;
-	public List<string> ModuleBlacklist = new List<string>();
+    public bool Enabled = false;
+    public Dictionary<string, bool?> EnabledModules = new Dictionary<string, bool?>();
 }

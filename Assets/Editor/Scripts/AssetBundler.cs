@@ -242,8 +242,10 @@ public class AssetBundler
         switch (System.Environment.OSVersion.Platform)
         {
             case PlatformID.MacOSX:
-            case PlatformID.Unix:
                 unityAssembliesLocation = EditorApplication.applicationPath.Replace("Unity.app", "Unity.app/Contents/Managed/");
+                break;
+            case PlatformID.Unix:
+                unityAssembliesLocation = EditorApplication.applicationPath.Replace("Unity/", "!").Replace("Unity", "Data/Managed/").Replace("!", "Unity/");
                 break;
             case PlatformID.Win32NT:
             default:

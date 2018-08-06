@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using Mineseeker;
 
+//For the PNG generation that didn't work
 /*public static class ExtensionMethod
 {
     public static Texture2D toTexture2D(this RenderTexture tRex)
@@ -31,6 +32,9 @@ public class MineseekerModule : MonoBehaviour
     public KMSelectable[] Buttons;
     public Color[] BackgroundColors;
     public string[] ColorNames, CBNames;
+    private string CBCalc;
+    //The color map
+    //The image map
     private int[][] col = new int[][]
     {
        new int[] { 3, 7, 14, 14, 14, 11, 14, 14, 12, 13, 6, 2 },
@@ -60,6 +64,7 @@ public class MineseekerModule : MonoBehaviour
        new int[] { 7, 6, 0, 4, 7, 7, 2, 3, 7, 7, 5, 1 },
        new int[] { 3, 7, 7, 1, 7, 7, 7, 5, 6, 4, 0, 2 }
     };
+    //The color table
     private int[,] tab = new int[,]
     {
         //White
@@ -91,6 +96,7 @@ public class MineseekerModule : MonoBehaviour
         //Purple
         { 5, 6, 1, 1, 4, 1, 0 }
     };
+    //Walls map
     private string[,] dir = new string[,]
     {
         { "R", "LR",  "LR",  "LR",  "LR",  "LDR",  "LR",  "L",  "D",  "R", "LR", "LD" },
@@ -106,21 +112,32 @@ public class MineseekerModule : MonoBehaviour
         { "DRU", "LDRU", "LR", "L", "DU", "U", "D", "RU", "LDR", "LD", "U", "D" },
         { "RU", "LU", "R", "LR", "LRU", "LR", "LRU", "L", "RU", "LRU", "LR", "LU" }
     };
+    //All possible solutions for the current quadrant, for logging purposes.
+    //The arrays are based on each image and their current locations.
     private int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
+    //Colorblind text locations. They're kind of hard to center.
     private float[][] Translations = new float[][] { new[] { -.112f, .02f }, new[] { -.08f, .02f }, new[] { -.12f, 0 }, new[] { -.1f, 0 }, new[] { -.1f, -.02f }, new[] { -.09f, .01f }, new[] { -.1f, -.01f } };
-    private int row, start, startingValue, destination, tF, a, d;
+    //The index value for the starting bomb | The value for the destination bomb, before Two Factor are factored in |
+    //The index value for the destination bomb | The Two Factor sum | a/d: The current visable location.
+    private int start, startingValue, destination, tF, a, d;
     private char[] vowels = { 'A', 'E', 'I', 'O', 'U' };
     private int[] serial, startingLocation;
     private Queue<IEnumerable> queue = new Queue<IEnumerable>();
+    //Queue for keeping track of all destination possibilites for logging purposes
     private Queue<int[]> Movement = new Queue<int[]>();
+    //The list of possible destination values for logging purposes
     private List<int[]> map = new List<int[]>();
-    private bool _isActive, ready = true, solved;
+    //Keep track of when the module is processing an input (don't process any others while ready is false) |
+    //Don't allow interactions when !_isActive or solved | colorblind boolean variable for TP compatibility
+    private bool ready = true, _isActive = false, solved = false, cb = false;
 
     // Use this for initialization
     void Start()
     {
-        if (!CBMode.ColorblindModeActive) CBText.gameObject.SetActive(false);
+	    cb = CBMode.ColorblindModeActive;
+        if (!cb) CBText.gameObject.SetActive(false);
         _moduleID = _moduleIDCounter++;
+        //This is PNG generation code that doesn't work at all. Keeping it here in case a PNG reader is ever added to the Logfile Analyzer.
         /*Debug.LogFormat("[Mineseeker #{0}] " + Convert.ToBase64String(sprites[2].texture.GetRawTextureData()));
         RenderTexture copy = new RenderTexture(sprites[2].texture.width, sprites[2].texture.height, 0);
         Graphics.Blit(sprites[2].texture, copy);
@@ -372,6 +389,8 @@ public class MineseekerModule : MonoBehaviour
                 BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             }
             Module.HandleStrike();
+            //Clear the queue for TP Compatibility
+            queue.Clear();
             Debug.LogFormat("[Mineseeker #{0}] Wall detected to the {3} at coordinate [{2},{1}]", _moduleID, a + 1, d + 1, m);
             t = 0;
             while (t < duration)
@@ -385,7 +404,7 @@ public class MineseekerModule : MonoBehaviour
                 BombHolder.transform.localPosition = Vector3.Lerp(bh1, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
                 BombHolder2.transform.localPosition = Vector3.Lerp(b, bh2O, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             }
-            if (CBMode.ColorblindModeActive && oP.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
+            if (cb && oP.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
             ready = true;
             yield break;
         }
@@ -409,7 +428,7 @@ public class MineseekerModule : MonoBehaviour
             BombHolder.transform.localPosition = Vector3.Lerp(b, bh1, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
         }
-        if (CBMode.ColorblindModeActive && new int[] { a, d }.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
+        if (cb && new int[] { a, d }.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
         Debug.LogFormat("[Mineseeker #{0}] Moved {1} from coordinate [{3},{2}] to [{5},{4}]", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
         BombHolder.sprite = sprites[loc[a][d]];
         BombHolder.transform.localPosition = new Vector3(0, 0.55f, 0);
@@ -418,13 +437,21 @@ public class MineseekerModule : MonoBehaviour
         ready = true;
     }
 
-    private string TwitchHelpMessage = "Interact with the module using !{0} udlr NSEW, and use !{0} submit to submit your selection.";
+    private string TwitchHelpMessage = "Interact with the module using !{0} udlr NSEW, and use !{0} submit to submit your selection. Toggle colorblind mode using !{0} colorblind.";
 
-    private KMSelectable[] ProcessTwitchCommand(string input)
+    private IEnumerator ProcessTwitchCommand(string input)
     {
         input = input.ToLowerInvariant();
         var submit = false;
         var presses = new List<KMSelectable>();
+	    if (input.Equals("colorblind"))
+	    {
+            yield return null;
+	        cb = !cb;
+	        if (new[] {a, d}.SequenceEqual(startingLocation) && cb) CBText.gameObject.SetActive(true);
+            else if (CBText.gameObject.activeSelf) CBText.gameObject.SetActive(false);
+            yield break;
+	    }	
         if (input.EndsWith("submit") || input.StartsWith("submit"))
         {
             submit = true;
@@ -454,11 +481,15 @@ public class MineseekerModule : MonoBehaviour
                 case ' ':
                     break;
                 default:
-                    return null;
+                    yield break;
             }
         }
         if (submit) presses.Add(Buttons[4]);
-        return presses.ToArray();
+        yield return null;
+        yield return presses.ToArray();
+        //Focus on the module until the queue is empty
+        //This is so solves and strikes are detected properly
+        yield return new WaitUntil(() => queue.Count == 0);
     }
 
     // Update is called once per frame
