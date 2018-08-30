@@ -16,7 +16,7 @@
    version="1.1"
    id="svg8"
    sodipodi:docname="Map.svg"
-   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)">
+   inkscape:version="0.92.3 (d244b95, 2018-08-02)">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -27,15 +27,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.82277649"
-     inkscape:cx="85.403738"
+     inkscape:cx="211.80502"
      inkscape:cy="311.70686"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1366"
-     inkscape:window-height="745"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-width="1301"
+     inkscape:window-height="744"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      showguides="true"
      inkscape:lockguides="false" />
@@ -567,7 +567,7 @@
        xlink:href="#rectV-1"
        transform="translate(-52,26)" />
     <use
-       transform="translate(0,39)"
+       transform="translate(0,26)"
        xlink:href="#rectV-2"
        height="100%"
        width="100%"
@@ -581,7 +581,7 @@
        width="100%"
        height="100%"
        xlink:href="#rectV-3"
-       transform="translate(-52,13)" />
+       transform="translate(-52,26)" />
     <use
        transform="translate(26,26)"
        xlink:href="#rectV-4"
@@ -1221,68 +1221,68 @@
        x="0"
        id="rect0-143" />
     <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\100.png"
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/100.png"
        xlink:href="100.png"
-       y="55"
-       x="27"
+       width="11"
+       height="11"
+       preserveAspectRatio="none"
        id="image5"
+       x="27"
+       y="55" />
+    <image
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/85.png"
+       xlink:href="85.png"
+       y="55"
+       x="40"
+       id="image4"
        preserveAspectRatio="none"
        height="11"
        width="11" />
     <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\85.png"
-       xlink:href="85.png"
-       width="11"
-       height="11"
-       preserveAspectRatio="none"
-       id="image4"
-       x="40"
-       y="55" />
-    <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\11.png"
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/11.png"
        xlink:href="11.png"
-       width="11"
-       height="11"
-       preserveAspectRatio="none"
-       id="image3"
+       y="55"
        x="92"
-       y="55" />
+       id="image3"
+       preserveAspectRatio="none"
+       height="11"
+       width="11" />
     <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\6.png"
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/6.png"
        xlink:href="6.png"
-       width="11"
-       height="11"
-       preserveAspectRatio="none"
-       id="image0"
+       y="55"
        x="131"
-       y="55" />
-    <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\6o.png"
-       xlink:href="6o.png"
-       width="11"
+       id="image0"
+       preserveAspectRatio="none"
        height="11"
-       preserveAspectRatio="none"
-       id="image1"
+       width="11" />
+    <image
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/6o.png"
+       xlink:href="6o.png"
+       y="55"
        x="144"
-       y="55" />
+       id="image1"
+       preserveAspectRatio="none"
+       height="11"
+       width="11" />
     <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\10.png"
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/10.png"
        xlink:href="10.png"
-       width="12"
-       height="12"
-       preserveAspectRatio="none"
-       id="image2"
+       y="54"
        x="157"
-       y="54" />
-    <image
-       sodipodi:absref="D:\ktane\Mineseeker\Manual\img\63214.png"
-       xlink:href="63214.png"
-       width="12"
-       height="12"
+       id="image2"
        preserveAspectRatio="none"
-       id="image6"
+       height="12"
+       width="12" />
+    <image
+       sodipodi:absref="/home/riverbui/Other projects/Mineseeker/Manual/img/63214.png"
+       xlink:href="63214.png"
+       y="54"
        x="170"
-       y="54" />
+       id="image6"
+       preserveAspectRatio="none"
+       height="12"
+       width="12" />
     <use
        y="0"
        x="0"
@@ -1531,7 +1531,7 @@
        width="100%"
        height="100%"
        xlink:href="#image5-4"
-       transform="translate(-39,13)" />
+       transform="translate(-39)" />
     <use
        transform="translate(78,13)"
        xlink:href="#image2-4"
@@ -1589,7 +1589,7 @@
        x="0"
        id="image1-6" />
     <use
-       transform="translate(-26,13)"
+       transform="translate(-26,26)"
        xlink:href="#image5-5"
        height="100%"
        width="100%"
