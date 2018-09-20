@@ -30,6 +30,6 @@ MonoBehaviour:
 
 
     Thanks to ThatGuyCalledJules for allowing me to reuse the screen/arrows from Synonyms'
-  version: 1.3
+  version: 1.30
   outputFolder: build
   previewImage: {fileID: 2800000, guid: b796da3759615524eb90bc5afd767426, type: 3}
