@@ -116,7 +116,7 @@ public class MineseekerModule : MonoBehaviour
     //The arrays are based on each image and their current locations.
     private int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
     //Colorblind text locations. They're kind of hard to center.
-    private float[][] Translations = new float[][] { new[] { -.112f, .02f }, new[] { -.08f, .02f }, new[] { -.12f, 0 }, new[] { -.1f, 0 }, new[] { -.1f, -.02f }, new[] { -.09f, .01f }, new[] { -.1f, -.01f } };
+    private float[][] Translations = new float[][] { new[] { -.07f, .02f }, new[] { -.038f, .02f }, new[] { -.078f, 0 }, new[] { -.058f, 0 }, new[] { -.058f, -.02f }, new[] { -.048f, .01f }, new[] { -.058f, -.01f } };
     //The index value for the starting bomb | The value for the destination bomb, before Two Factor are factored in |
     //The index value for the destination bomb | The Two Factor sum | a/d: The current visable location.
     private int start, startingValue, destination, tF, a, d;
@@ -192,7 +192,7 @@ public class MineseekerModule : MonoBehaviour
             Debug.LogFormat("[Mineseeker #{0}] Color is {1}", _moduleID, ColorNames[Array.IndexOf(BackgroundColors, Background.color)]);
             Debug.LogFormat("[Mineseeker #{0}] Bomb shown is {1}", _moduleID, sprites[start].name);
             Debug.LogFormat("[Mineseeker #{0}] Current location is [{2}, {1}]", _moduleID, a + 1, d + 1);
-            CBText.text = ((Char)(65 + a)).ToString() + CBNames[colorBackground];
+            CBText.text = CBNames[colorBackground];
             CBText.transform.localPosition = new Vector3(Translations[start][0], 0.55f, Translations[start][1]);
             Calculate();
             _isActive = true;
@@ -438,6 +438,8 @@ public class MineseekerModule : MonoBehaviour
     }
 
     private string TwitchHelpMessage = "Interact with the module using !{0} udlr NSEW, and use !{0} submit to submit your selection. Toggle colorblind mode using !{0} colorblind.";
+    //Colorblind manual by default
+    private string TwitchManualCode = "Mineseeker black & white";
 
     private IEnumerator ProcessTwitchCommand(string input)
     {
