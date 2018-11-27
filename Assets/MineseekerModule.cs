@@ -32,10 +32,9 @@ public class MineseekerModule : MonoBehaviour
     public KMSelectable[] Buttons;
     public Color[] BackgroundColors;
     public string[] ColorNames, CBNames;
-    private string CBCalc;
     //The color map
     //The image map
-    private int[][] col = new int[][]
+    private readonly int[][] col = new int[][]
     {
        new int[] { 3, 7, 14, 14, 14, 11, 14, 14, 12, 13, 6, 2 },
        new int[] { 4, 6, 14, 11, 14, 3, 0, 14, 14, 5, 14, 9 },
@@ -65,7 +64,7 @@ public class MineseekerModule : MonoBehaviour
        new int[] { 3, 7, 7, 1, 7, 7, 7, 5, 6, 4, 0, 2 }
     };
     //The color table
-    private int[,] tab = new int[,]
+    private readonly int[,] tab = new int[,]
     {
         //White
         { 6, 3, 0, 1, 2, 6, 0 },
@@ -97,7 +96,7 @@ public class MineseekerModule : MonoBehaviour
         { 5, 6, 1, 1, 4, 1, 0 }
     };
     //Walls map
-    private string[,] dir = new string[,]
+    private readonly string[,] dir = new string[,]
     {
         { "R", "LR",  "LR",  "LR",  "LR",  "LDR",  "LR",  "L",  "D",  "R", "LR", "LD" },
         { "D", "DR", "LDR", "LDR", "L", "DU", "DR", "LR", "LDRU", "LDR", "L", "DU" },
@@ -114,9 +113,11 @@ public class MineseekerModule : MonoBehaviour
     };
     //All possible solutions for the current quadrant, for logging purposes.
     //The arrays are based on each image and their current locations.
-    private int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
+    private readonly int[][] Destinations = new int[][] { new[]{ 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 }, new[] { 0, 0 } };
+    //Autosolve uses a lot of Destinations[tab[colorBackground, destination]], so just make a variable out of it
+    private int[] CurDest { get { return Destinations[tab[colorBackground, destination]]; } }
     //Colorblind text locations. They're kind of hard to center.
-    private float[][] Translations = new float[][] { new[] { -.07f, .02f }, new[] { -.038f, .02f }, new[] { -.078f, 0 }, new[] { -.058f, 0 }, new[] { -.058f, -.02f }, new[] { -.048f, .01f }, new[] { -.058f, -.01f } };
+    private readonly float[][] Translations = new float[][] { new[] { -.07f, .02f }, new[] { -.038f, .02f }, new[] { -.078f, 0 }, new[] { -.058f, 0 }, new[] { -.058f, -.02f }, new[] { -.048f, .01f }, new[] { -.058f, -.01f } };
     //The index value for the starting bomb | The value for the destination bomb, before Two Factor are factored in |
     //The index value for the destination bomb | The Two Factor sum | a/d: The current visable location.
     private int start, startingValue, destination, tF, a, d;
@@ -128,7 +129,7 @@ public class MineseekerModule : MonoBehaviour
     //The list of possible destination values for logging purposes
     private List<int[]> map = new List<int[]>();
     //Keep track of when the module is processing an input (don't process any others while ready is false) |
-    //Don't allow interactions when !_isActive or solved | colorblind boolean variable for TP compatibility
+    //Don't allow interactions when !_isActive or solved | colorblind boolean variable for TP compatibility | inReset for handling button presses while they're inactive
     private bool ready = true, _isActive = false, solved = false, cb = false;
 
     // Use this for initialization
@@ -156,6 +157,7 @@ public class MineseekerModule : MonoBehaviour
         start = UnityEngine.Random.Range(0, sprites.Length);
         colorBackground = UnityEngine.Random.Range(0, BackgroundColors.Count());
         var selected = false;
+        var selectedIndex = new List<int[]>();
         while (!selected)
         {
             for (int i = 0; i < loc.Length; i++)
@@ -167,6 +169,7 @@ public class MineseekerModule : MonoBehaviour
                     if (z == y)
                     {
                         selected = true;
+                        selectedIndex.Add(new[] { i, y });
                         a = i;
                         d = y;
                     }
@@ -176,6 +179,12 @@ public class MineseekerModule : MonoBehaviour
             {
                 start = UnityEngine.Random.Range(0, sprites.Length);
                 colorBackground = UnityEngine.Random.Range(0, BackgroundColors.Count());
+            }
+            else
+            {
+                var rnd = UnityEngine.Random.Range(0, selectedIndex.Count);
+                a = selectedIndex[rnd][0];
+                d = selectedIndex[rnd][1];
             }
         }
         DestinationValues();
@@ -204,6 +213,7 @@ public class MineseekerModule : MonoBehaviour
     {
         var set = false;
         Destinations[start] = new[] { a, d };
+        map.Add(new[] { a, d });
         var y = a;
         var z = d;
         while (!set)
@@ -266,19 +276,42 @@ public class MineseekerModule : MonoBehaviour
         while (destination > 6) destination -= 7;
         Debug.LogFormat("[Mineseeker #{0}] Number is {1}", _moduleID, destination);
         Debug.LogFormat("[Mineseeker #{0}] Desired Bomb is {1}", _moduleID, sprites[tab[colorBackground, destination]].name);
-        Debug.LogFormat("[Mineseeker #{0}] Destination is [{2}, {1}]", _moduleID, Destinations[tab[colorBackground, destination]][0] + 1, Destinations[tab[colorBackground,destination]][1] + 1);
+        Debug.LogFormat("[Mineseeker #{0}] Destination is [{2}, {1}]", _moduleID, CurDest[0] + 1, CurDest[1] + 1);
     }
 
     KMSelectable.OnInteractHandler ButtonHandler(int i)
     {
         return delegate ()
         {
+            //if (solved) return false;
+            if (i == 5)
+            {
+                var coroutine = Count();
+                StartCoroutine(coroutine);
+                Buttons[5].OnInteractEnded = delegate
+                {
+                    StopCoroutine(coroutine);
+                    Buttons[5].OnInteractEnded = null;
+                };
+                return false;
+            }
             if (!_isActive || solved) return false;
             Buttons[i].AddInteractionPunch(0.5f);
             Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
             queue.Enqueue(ButtonPress(i));
             return false;
         };
+    }
+
+    private IEnumerator Count()
+    {
+        var t = 0f;
+        while (isActiveAndEnabled)
+        {
+            yield return t += Time.deltaTime;
+            if (t > 2.0f) break;
+        }
+        queue.Enqueue(ButtonPress(5));
     }
 
     private IEnumerator WaitForInput()
@@ -359,8 +392,13 @@ public class MineseekerModule : MonoBehaviour
                     ready = true;
                 }
                 break;
+            case 5:
+                var coroutine = AutoSolve(startingLocation, true);
+                while (coroutine.MoveNext())
+                    yield return coroutine.Current;
+                break;
         }
-        if (i == 4) yield break;
+        if (i > 3) yield break;
         yield return MoveScreen(oP, rP, cP, move, strike);
         yield return null;
     }
@@ -446,6 +484,12 @@ public class MineseekerModule : MonoBehaviour
         input = input.ToLowerInvariant();
         var submit = false;
         var presses = new List<KMSelectable>();
+        if (input.StartsWith("reset") || input.EndsWith("reset"))
+        {
+            yield return null;
+            yield return new KMSelectable[] { Buttons.Last() };
+            yield break;
+        }
 	    if (input.Equals("colorblind"))
 	    {
             yield return null;
@@ -492,6 +536,129 @@ public class MineseekerModule : MonoBehaviour
         //Focus on the module until the queue is empty
         //This is so solves and strikes are detected properly
         yield return new WaitUntil(() => queue.Count == 0);
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        yield return new WaitUntil(() => _isActive || solved);
+        StartCoroutine(AutoSolve());
+        yield return null;
+    }
+
+    IEnumerator AutoSolve(int[] curDest = null, bool reset = false)
+    {
+        if (!reset) yield return new WaitForSeconds((_moduleID - 1) * 0.5f % 10);
+        var curLoc = new[] { a, d };
+        var y = new[] { 0, curLoc[0], curLoc[1] }.ToArray();
+        var step = 0;
+        if (curDest == null) curDest = CurDest;
+        if (curLoc.SequenceEqual(curDest) && !reset)
+        {
+            Buttons[4].OnInteract();
+            yield break;
+        }
+        else if (curLoc.SequenceEqual(curDest))
+        {
+            Debug.LogFormat("[Mineseeker #{0}] You reset from your current location to your current location.", _moduleID);
+            ready = true;
+            queue.Clear();
+            yield break;
+        }
+        var chars = new[] { 'L', 'D', 'R', 'U' };
+        var list = new List<string>();
+        var end = false;
+        var str = "";
+        var direction = 0;
+        var dirCount = 0;
+        list.Add("[0, -1, " + string.Join(", ", curLoc.Select(x => x.ToString()).ToArray()) + ", 0]");
+        var func = new Func<int>[] { () => y[2]--, () => y[1]++, () => y[2]++, () => y[1]-- };
+        while (!end)
+        {
+            var curStep = step;
+            if (dir[y[1], y[2]].Contains(chars[direction]))
+            {
+                var t = str + direction;
+                if (!Contains(new[] { curLoc[0], curLoc[1] }, t))
+                {
+                    str = t;
+                    step++;
+                    func[direction]();
+                    list.Add(string.Format("[{0}, {1}, {2}, {3}, {4}]", str, step, y[1], y[2], dirCount));
+                    direction = 0;
+                }
+                else direction++;
+            }
+            else
+                direction++;
+            if (direction > 3 && curStep == step && step != 0)
+            {
+                while (direction > 3 && step > 0)
+                {
+                    step--;
+                    func[(str.Last() - '0' + 2) % 4]();
+                    direction = str.Last() - '0' + 1;
+                    str = str.Length > 1 ? str.Substring(0, str.Count() - 1) : "";
+                }
+            }
+            if (direction > 3 && str.Length == 0)
+                end = true;
+            direction %= 4;
+            dirCount++;
+            if (dirCount > 1000)
+            {
+                Debug.LogFormat("Error.");
+                Debug.LogFormat(str);
+                Debug.LogFormat("[{0}, {1}] - [{2}, {3}]", curLoc[0], curLoc[1], a, d);
+                Debug.LogFormat(string.Join("\n", list.ToArray()));
+                yield break;
+            }
+        }
+        var find = list.Where(x => {
+            var test = x.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return int.Parse(test[2]) == curDest[0] && int.Parse(test[3]) == curDest[1];
+            }).OrderBy(x => {
+                var test = x.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                return int.Parse(test[1]);
+            });
+        var split = find.ToList()[0].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)[0].Replace("[","");
+        foreach (char c in split)
+        {
+            var notC = c - '0';
+            var selectables = new[] { Buttons[3], Buttons[2], Buttons[1], Buttons[0] };
+            ready = true;
+            selectables[notC].OnInteract();
+        }
+        if (reset)
+        {
+            Debug.LogFormat("[Mineseeker {0}] Returned to starting location.", _moduleID);
+            ready = true;
+            yield break;
+        }
+        yield return new WaitUntil(() => queue.Count == 0 && ready);
+        if (!curDest.SequenceEqual(CurDest))
+        {
+            StartCoroutine(AutoSolve());
+            yield break;
+        }
+        Buttons[4].OnInteract();
+    }
+
+    bool Contains(int[] curLoc, string str)
+    {
+        var func = new Func<int>[] { () => curLoc[1]--, () => curLoc[0]++, () => curLoc[1]++, () => curLoc[0]-- };
+        var list = new List<int[]> { new[] { curLoc[0], curLoc[1] } };
+        foreach (int num in str.ToCharArray().Select(x => x - '0'))
+        {
+            func[num]();
+            if (list.Any(x => x.SequenceEqual(new[] { curLoc[0], curLoc[1] })))
+            {
+                curLoc[0] = list[0][0];
+                curLoc[1] = list[0][1];
+                return true;
+            }
+            list.Add(curLoc.ToArray());
+        }
+        return false;
     }
 
     // Update is called once per frame
