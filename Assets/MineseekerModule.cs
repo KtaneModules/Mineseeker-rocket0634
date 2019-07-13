@@ -20,8 +20,8 @@ using Mineseeker;
 
 public class MineseekerModule : MonoBehaviour
 {
-    private static int _moduleIDCounter = 1, activateOrderCounter;
-    private int _moduleID, colorBackground, activateOrder;
+    private static int _moduleIDCounter = 1;
+    private int _moduleID, colorBackground;
     public KMBombInfo Info;
     public KMBombModule Module;
     public KMAudio Audio;
@@ -135,7 +135,6 @@ public class MineseekerModule : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        activateOrderCounter = 0;
 	    cb = CBMode.ColorblindModeActive;
         if (!cb) CBText.gameObject.SetActive(false);
         _moduleID = _moduleIDCounter++;
@@ -206,9 +205,6 @@ public class MineseekerModule : MonoBehaviour
             CBText.transform.localPosition = new Vector3(Translations[start][0], 0.55f, Translations[start][1]);
             Calculate();
             _isActive = true;
-            activateOrder = activateOrderCounter;
-            activateOrderCounter++;
-            Debug.LogFormat("<Mineseeker #{0}> {1}", _moduleID, activateOrder);
         };
         StartCoroutine(WaitForInput());
     }
@@ -557,7 +553,7 @@ public class MineseekerModule : MonoBehaviour
     IEnumerator AutoSolve(int[] curDest = null, bool reset = false)
     {
         var curLoc = new[] { a, d };
-        var y = new[] { 0, curLoc[0], curLoc[1] }.ToArray();
+        var y = new[] { curLoc[0], curLoc[1] };
         var step = 0;
         if (curDest == null) curDest = CurDest;
         if (curLoc.SequenceEqual(curDest) && !reset)
@@ -576,22 +572,26 @@ public class MineseekerModule : MonoBehaviour
         var list = new List<string>();
         var end = false;
         var str = "";
+        var movements = new Stack<int[]>();
+        var explored = new List<int[]>();
         var direction = 0;
         var dirCount = 0;
         list.Add("[0, -1, " + string.Join(", ", curLoc.Select(x => x.ToString()).ToArray()) + ", 0]");
-        var func = new Func<int>[] { () => y[2]--, () => y[1]++, () => y[2]++, () => y[1]-- };
+        var directions = new int[][] { new[] { 0, -1 }, new[] { 1, 0 }, new[] { 0, 1 }, new[] { -1, 0 } };
         while (!end)
         {
             var curStep = step;
-            if (dir[y[1], y[2]].Contains(chars[direction]))
+            var nextLoc = new[] { y[0] + directions[direction][0], y[1] + directions[direction][1] };
+            if (dir[y[0], y[1]].Contains(chars[direction]) && !explored.Any(x => x.SequenceEqual(nextLoc)))
             {
-                var t = str + direction;
-                if (!Contains(new[] { curLoc[0], curLoc[1] }, t))
+                if (!movements.Any(x => x.SequenceEqual(nextLoc)))
                 {
-                    str = t;
+                    str += direction;
+                    movements.Push(y.ToArray());
                     step++;
-                    func[direction]();
-                    list.Add(string.Format("[{0}, {1}, {2}, {3}, {4}]", str, step, y[1], y[2], dirCount));
+                    y[0] += directions[direction][0];
+                    y[1] += directions[direction][1];
+                    list.Add(string.Format("[{0}, {1}, {2}, {3}, {4}]", str, step, y[0], y[1], dirCount));
                     direction = 0;
                 }
                 else direction++;
@@ -603,9 +603,12 @@ public class MineseekerModule : MonoBehaviour
                 while (direction > 3 && step > 0)
                 {
                     step--;
-                    func[(str.Last() - '0' + 2) % 4]();
+                    explored.Add(y.ToArray());
+                    y[0] += directions[(str.Last() - '0' + 2) % 4][0];
+                    y[1] += directions[(str.Last() - '0' + 2) % 4][1];
                     direction = str.Last() - '0' + 1;
                     str = str.Length > 1 ? str.Substring(0, str.Count() - 1) : "";
+                    movements.Pop();
                 }
             }
             if (direction > 3 && str.Length == 0)
