@@ -20,8 +20,8 @@ using Mineseeker;
 
 public class MineseekerModule : MonoBehaviour
 {
-    private static int _moduleIDCounter = 1;
-    private int _moduleID, colorBackground;
+    private static int _moduleIDCounter = 1, activateOrderCounter;
+    private int _moduleID, colorBackground, activateOrder;
     public KMBombInfo Info;
     public KMBombModule Module;
     public KMAudio Audio;
@@ -135,6 +135,7 @@ public class MineseekerModule : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        activateOrderCounter = 0;
 	    cb = CBMode.ColorblindModeActive;
         if (!cb) CBText.gameObject.SetActive(false);
         _moduleID = _moduleIDCounter++;
@@ -205,6 +206,9 @@ public class MineseekerModule : MonoBehaviour
             CBText.transform.localPosition = new Vector3(Translations[start][0], 0.55f, Translations[start][1]);
             Calculate();
             _isActive = true;
+            activateOrder = activateOrderCounter;
+            activateOrderCounter++;
+            Debug.LogFormat("<Mineseeker #{0}> {1}", _moduleID, activateOrder);
         };
         StartCoroutine(WaitForInput());
     }
@@ -540,14 +544,18 @@ public class MineseekerModule : MonoBehaviour
 
     IEnumerator TwitchHandleForcedSolve()
     {
-        yield return new WaitUntil(() => _isActive || solved);
-        StartCoroutine(AutoSolve());
-        yield return null;
+        while (!ready)
+            yield return true;
+        var coroutine = AutoSolve();
+        while (coroutine.MoveNext())
+        {
+            yield return coroutine.Current;
+            yield return true;
+        }
     }
 
     IEnumerator AutoSolve(int[] curDest = null, bool reset = false)
     {
-        if (!reset) yield return new WaitForSeconds((_moduleID - 1) * 0.5f % 10);
         var curLoc = new[] { a, d };
         var y = new[] { 0, curLoc[0], curLoc[1] }.ToArray();
         var step = 0;
@@ -603,6 +611,7 @@ public class MineseekerModule : MonoBehaviour
             if (direction > 3 && str.Length == 0)
                 end = true;
             direction %= 4;
+            yield return null;
             dirCount++;
             if (dirCount > 1000)
             {
@@ -626,6 +635,7 @@ public class MineseekerModule : MonoBehaviour
             var notC = c - '0';
             var selectables = new[] { Buttons[3], Buttons[2], Buttons[1], Buttons[0] };
             ready = true;
+            yield return null;
             selectables[notC].OnInteract();
         }
         if (reset)
@@ -640,6 +650,7 @@ public class MineseekerModule : MonoBehaviour
             StartCoroutine(AutoSolve());
             yield break;
         }
+        yield return null;
         Buttons[4].OnInteract();
     }
 
@@ -651,11 +662,7 @@ public class MineseekerModule : MonoBehaviour
         {
             func[num]();
             if (list.Any(x => x.SequenceEqual(new[] { curLoc[0], curLoc[1] })))
-            {
-                curLoc[0] = list[0][0];
-                curLoc[1] = list[0][1];
                 return true;
-            }
             list.Add(curLoc.ToArray());
         }
         return false;
