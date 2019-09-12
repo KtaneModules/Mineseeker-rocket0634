@@ -129,8 +129,9 @@ public class MineseekerModule : MonoBehaviour
     //The list of possible destination values for logging purposes
     private List<int[]> map = new List<int[]>();
     //Keep track of when the module is processing an input (don't process any others while ready is false) |
-    //Don't allow interactions when !_isActive or solved | colorblind boolean variable for TP compatibility | inReset for handling button presses while they're inactive
-    private bool ready = true, _isActive = false, solved = false, cb = false;
+    //Don't allow interactions when !_isActive or solved | colorblind boolean variable for TP compatibility | 
+    //tpReset for resetting the module in Twitch Plays
+    private bool ready = true, _isActive = false, solved = false, cb = false, tpReset;
 
     // Use this for initialization
     void Start()
@@ -284,7 +285,7 @@ public class MineseekerModule : MonoBehaviour
         return delegate ()
         {
             //if (solved) return false;
-            if (i == 5)
+            if (i == 5 && !tpReset)
             {
                 var coroutine = Count();
                 StartCoroutine(coroutine);
@@ -293,6 +294,11 @@ public class MineseekerModule : MonoBehaviour
                     StopCoroutine(coroutine);
                     Buttons[5].OnInteractEnded = null;
                 };
+                return false;
+            }
+            else if (i == 5 && tpReset)
+            {
+                queue.Enqueue(ButtonPress(i));
                 return false;
             }
             if (!_isActive || solved) return false;
@@ -407,8 +413,10 @@ public class MineseekerModule : MonoBehaviour
     {
         var t = 0.0f;
         var duration = 0.25f;
+        var nextIsStart = new int[] { a, d }.SequenceEqual(startingLocation);
         BombHolder2.transform.localPosition = bh2O;
         BombHolder2.sprite = sprites[7];
+        if (nextIsStart && !Background.gameObject.activeSelf) Background.gameObject.SetActive(true);
         var b = BombHolder.transform.localPosition;
         if (CBText.gameObject.activeSelf) CBText.gameObject.SetActive(false);
         if (strike)
@@ -466,7 +474,8 @@ public class MineseekerModule : MonoBehaviour
             BombHolder.transform.localPosition = Vector3.Lerp(b, bh1, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
             BombHolder2.transform.localPosition = Vector3.Lerp(bh2O, b, Mathf.SmoothStep(0.0f, 1.0f, t / duration));
         }
-        if (cb && new int[] { a, d }.SequenceEqual(startingLocation)) CBText.gameObject.SetActive(true);
+        if (cb && nextIsStart) CBText.gameObject.SetActive(true);
+        if (!nextIsStart && Background.gameObject.activeSelf) Background.gameObject.SetActive(false);
         Debug.LogFormat("[Mineseeker #{0}] Moved {1} from coordinate [{3},{2}] to [{5},{4}]", _moduleID, move, oP[0] + 1, oP[1] + 1, a + 1, d + 1);
         BombHolder.sprite = sprites[loc[a][d]];
         BombHolder.transform.localPosition = new Vector3(0, 0.55f, 0);
@@ -487,6 +496,7 @@ public class MineseekerModule : MonoBehaviour
         if (input.StartsWith("reset") || input.EndsWith("reset"))
         {
             yield return null;
+            tpReset = true;
             yield return new KMSelectable[] { Buttons.Last() };
             yield break;
         }
@@ -552,6 +562,7 @@ public class MineseekerModule : MonoBehaviour
 
     IEnumerator AutoSolve(int[] curDest = null, bool reset = false)
     {
+        tpReset = false;
         var curLoc = new[] { a, d };
         var y = new[] { curLoc[0], curLoc[1] };
         var step = 0;
